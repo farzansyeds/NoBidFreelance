@@ -1,0 +1,52 @@
+// This tells Prisma to connect to your PostgreSQL database
+datasource db {
+  provider = "postgresql"
+  url      =env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+
+
+// 1. The User Table
+model User {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  password     String        //field for hashed passwords
+  name         String?
+  role         Role          @default(FREELANCER) // Are they a Client or Freelancer?
+  skills       String[]      // Store skills as an array: ["React", "Node.js"]
+  projects     Project[]     // Projects posted (if Client)
+  invitations  Invitation[] // Applications sent (if Freelancer)
+}
+
+// 2. The Project Table (Strictly Fixed Budget)
+model Project {
+  id             Int           @id @default(autoincrement())
+  title          String
+  description    String
+  budget         Float         // This is fixed. There is no "bid" field.
+  requiredSkills String[]      // Skills required for the job
+  client         User          @relation(fields: [clientId], references: [id])
+  clientId       Int
+  invitations  Invitation[]
+}
+
+
+
+model Invitation {
+  id           Int      @id @default(autoincrement())
+  project      Project  @relation(fields: [projectId], references: [id])
+  projectId    Int
+  freelancer   User     @relation(fields: [freelancerId], references: [id])
+  freelancerId Int
+  status       String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+}
+
+// A custom type for Roles
+enum Role {
+  CLIENT
+  FREELANCER
+}
